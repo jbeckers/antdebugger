@@ -39,7 +39,7 @@
 ## 1.1.1
 - Run configuration fix: create configuration
 
-## 1.1
+## 1.1.0
 - Variable value tooltip, expression evaluation (Alt-F8)
 - Run configuration: show targets from imported files
 - Run configuration fix: reload targets list on build file change
