@@ -62,7 +62,7 @@ public class AntStackFrame extends XStackFrame {
             appendText(component, position.getFile().getName());
             appendText(component, ":");
             appendText(component, Integer.toString(position.getLine() + 1));
-            component.setIcon(AllIcons.Debugger.StackFrame);
+            component.setIcon(AllIcons.Debugger.Frame);
         } else {
             component.append("Stack frame not available", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }

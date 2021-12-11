@@ -31,23 +31,28 @@ public class AntRunConfigurationType implements ConfigurationType {
 
     private ConfigurationFactory myFactory;
 
-    public String getDisplayName() {
+    @Override
+    public @NotNull String getDisplayName() {
         return "Ant build";
     }
 
+    @Override
     public String getConfigurationTypeDescription() {
         return "Ant build";
     }
 
+    @Override
     public Icon getIcon() {
-        return AntIcons.Target;
+        return AllIcons.Nodes.Target;
     }
 
+    @Override
     @NotNull
     public String getId() {
         return "AntRunConfigurationType";
     }
 
+    @Override
     public ConfigurationFactory[] getConfigurationFactories() {
         if (myFactory == null) {
             myFactory = new AntRunConfigurationFactory(this);

@@ -28,11 +28,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AntDebugRunner extends GenericProgramRunner {
 
+    @Override
     @NotNull
     public String getRunnerId() {
         return "AntDebugRunner";
     }
 
+    @Override
     public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
         return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) && profile instanceof AntRunConfiguration;
     }
@@ -45,7 +47,8 @@ public class AntDebugRunner extends GenericProgramRunner {
 
     @Nullable
     @Override
-    protected RunContentDescriptor doExecute(@NotNull Project project, @NotNull final RunProfileState state, @Nullable RunContentDescriptor contentToReuse, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    protected RunContentDescriptor doExecute(@NotNull final RunProfileState state,
+                                             @NotNull final ExecutionEnvironment environment) throws ExecutionException {
         FileDocumentManager.getInstance().saveAllDocuments();
 
         AntRunCommandLineState antRunCommandLineState = (AntRunCommandLineState) state;
@@ -59,10 +62,11 @@ public class AntDebugRunner extends GenericProgramRunner {
             Messages.showErrorDialog("Configuration doesn't have build file", "Ant debugger");
             return null;
         }
-        final AntDebuggerProxy debuggerProxy = new AntDebuggerProxy(project, debugPort);
+        final AntDebuggerProxy debuggerProxy = new AntDebuggerProxy(environment.getProject(), debugPort);
 
-        final XDebugSession session = XDebuggerManager.getInstance(project).
+        final XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
                 startSession( environment, new XDebugProcessStarter() {
+                    @Override
                     @NotNull
                     public XDebugProcess start(@NotNull final XDebugSession session) {
                         return new AntDebugProcess(session, state, serverProcessHandler, debuggerProxy);
