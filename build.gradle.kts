@@ -1,5 +1,8 @@
 import org.jetbrains.changelog.markdownToHTML
 
+/**
+ * Get a property from gradle.properties
+ */
 fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
