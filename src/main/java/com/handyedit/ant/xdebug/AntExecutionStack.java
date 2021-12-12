@@ -15,12 +15,13 @@ import java.util.List;
  */
 public class AntExecutionStack extends XExecutionStack {
 
-    private List<AntStackFrame> myFrames = new ArrayList<AntStackFrame>();
+    private final List<AntStackFrame> myFrames = new ArrayList<>();
     private AntStackFrame myTopFrame = null;
 
-    public AntExecutionStack(Project project, AntDebuggerProxy debuggerProxy) {
+    AntExecutionStack(final Project project,
+                      final AntDebuggerProxy debuggerProxy) {
         super("");
-        
+
         if (!debuggerProxy.isReady()) {
             return;
         }
@@ -35,19 +36,21 @@ public class AntExecutionStack extends XExecutionStack {
                 }
             }
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             myFrames.clear();
             myTopFrame = null;
         }
     }
 
+    @Override
     public XStackFrame getTopFrame() {
         return myTopFrame;
     }
 
-    public void computeStackFrames(final int frameCount, final XStackFrameContainer container) {
-        if (frameCount <= myFrames.size()) {
-            container.addStackFrames(myFrames.subList(frameCount, myFrames.size()), true);
+    @Override
+    public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
+        if (firstFrameIndex <= myFrames.size()) {
+            container.addStackFrames(myFrames.subList(firstFrameIndex, myFrames.size()), true);
         }
     }
 }

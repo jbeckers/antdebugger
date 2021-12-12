@@ -16,14 +16,17 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Proxy that communicates with Ant build process listener running in the Ant process.
@@ -34,65 +37,65 @@ import java.util.*;
  */
 public class AntDebuggerProxy {
 
-    private XDebuggerUtilImpl myDebuggerUtil = new XDebuggerUtilImpl();
+    private final XDebuggerUtilImpl myDebuggerUtil = new XDebuggerUtilImpl();
 
-    private Project myProject;
+    private final Project myProject;
 
     private BufferedReader myReader;
     private BufferedWriter myWriter;
 
     private XSourcePosition myCurrentPosition;
-    private List<XSourcePosition> myStack = new ArrayList<XSourcePosition>();
+    private final List<XSourcePosition> myStack = new ArrayList<>();
 
-    private Set<AntDebugListener> myListeners = new HashSet<AntDebugListener>();
+    private final Set<AntDebugListener> myListeners = new HashSet<>();
 
-    private Map<String, String> myVars = new HashMap<String, String>();
+    private final Map<String, String> myVars = new HashMap<>();
 
-    private int myPort;
+    private final int myPort;
 
-    public AntDebuggerProxy(Project project, int port) {
+    AntDebuggerProxy(final Project project,
+                     final int port) {
         myProject = project;
         myPort = port;
     }
 
-    synchronized public boolean isReady() {
+    public synchronized boolean isReady() {
         return myWriter != null && myReader != null;
     }
 
-    public boolean connect(ProgressIndicator indicator, ProcessHandler handler, int seconds) throws IOException {
-        Socket s = connect(seconds, handler, indicator);
-        if (s == null) {
-            return false;
-        }
-        synchronized (this) {
-            myReader = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            myWriter = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+    public boolean connect(final ProgressIndicator indicator, final ProcessHandler handler, final int seconds) throws IOException {
+        try (Socket s = connect(seconds, handler, indicator)){
+            if (s == null) {
+                return false;
+            }
+            synchronized (this) {
+                myReader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                myWriter = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+            }
         }
 
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    readAntResponse();
-                } catch (IOException e) {
-                    // todo:
-                }
+        new Thread(() -> {
+            try {
+                readAntResponse();
+            } catch (final IOException e) {
+                // todo:
             }
         }).start();
 
         return true;
     }
 
-    private Socket connect(int times, ProcessHandler handler, ProgressIndicator indicator) {
+    private Socket connect(final int times, final ProcessHandler handler, final ProgressIndicator indicator) {
         for (int i = 0; i < times && !indicator.isCanceled(); i++) {
             try {
                 return new Socket(NetUtil.getLocalHost(), myPort);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 try {
                     if (handler.isProcessTerminated()) {
                         throw new RuntimeException("Ant process terminated");
                     }
                     Thread.sleep(1000);
-                } catch (InterruptedException e1) {
+                } catch (final InterruptedException e1) {
                 }
             }
         }
@@ -117,7 +120,7 @@ public class AntDebuggerProxy {
         }
     }
 
-    private void processVar(String[] args) {
+    private void processVar(final String @NotNull ... args) {
         if (args.length != 2 && args.length != 3) {
             return;
         }
@@ -126,7 +129,7 @@ public class AntDebuggerProxy {
         myVars.put(args[1], val);
     }
 
-    private void processTargetStart(String[] args) {
+    private void processTargetStart(final String @NotNull ... args) {
         int line = Integer.parseInt(args[1]);
         XSourcePosition pos = createPosition(args[2], line - 1);
         if (pos != null) {
@@ -134,16 +137,16 @@ public class AntDebuggerProxy {
         }
     }
 
-    private void processTargetEnd(String[] args) {
+    private void processTargetEnd(final String @NotNull ... args) {
         myStack.remove(myStack.size() - 1);
     }
 
-    private void notifyListener(String[] args) {
+    private void notifyListener(final String @NotNull ... args) {
         String cmd = args[0];
-        for (AntDebugListener l: myListeners) {
+        for (final AntDebugListener l: myListeners) {
 
             if (AntBuildListener.CMD_BREAKPOINT_STOP.equals(cmd)) {
-                Integer line = Integer.parseInt(args[1]);
+                int line = Integer.parseInt(args[1]);
                 String file = args[2];
                 XSourcePosition pos = createPosition(file, line);
                 if (pos != null) {
@@ -157,23 +160,23 @@ public class AntDebuggerProxy {
         }
     }
 
-    private XSourcePosition createPosition(String file, int line) {
+    private @Nullable XSourcePosition createPosition(final String file, final int line) {
         VirtualFile virtualFile = FileUtil.findFile(file);
         return virtualFile != null ? myDebuggerUtil.createPosition(virtualFile, line) : null;
     }
-    
-    public void attach(Collection<BreakpointPosition> breakpoints) throws IOException {
-        for (BreakpointPosition position: breakpoints) {
+
+    public void attach(final @NotNull Collection<? extends BreakpointPosition> breakpoints) throws IOException {
+        for (final BreakpointPosition position: breakpoints) {
             addBreakpoint(position);
         }
         resume();
     }
 
-    public void addBreakpoint(BreakpointPosition pos) throws IOException {
+    public void addBreakpoint(final @NotNull BreakpointPosition pos) throws IOException {
         command(DebuggerCommandFactory.CMD_SET_BREAKPOINT, Integer.toString(pos.getLine()), pos.getFile());
     }
 
-    public void removeBreakpoint(BreakpointPosition pos) throws IOException {
+    public void removeBreakpoint(final @NotNull BreakpointPosition pos) throws IOException {
         command(DebuggerCommandFactory.CMD_REMOVE_BREAKPOINT, Integer.toString(pos.getLine()), pos.getFile());
     }
 
@@ -181,11 +184,11 @@ public class AntDebuggerProxy {
         command(DebuggerCommandFactory.CMD_RESUME_EXECUTION);
     }
 
-    public void runTo(XSourcePosition pos) {
+    public void runTo(final @NotNull XSourcePosition pos) {
         try {
             command(DebuggerCommandFactory.CMD_RUN_TO_CURSOR, Integer.toString(pos.getLine()), pos.getFile().getPath());
             resume();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             // todo:
         }
     }
@@ -193,7 +196,7 @@ public class AntDebuggerProxy {
     public void stepInto() {
         try {
             setTempBreakpoint(TempBreakpointType.INTO);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             // todo:
         }
     }
@@ -201,7 +204,7 @@ public class AntDebuggerProxy {
     public void stepOver() {
         try {
             setTempBreakpoint(TempBreakpointType.OVER);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             // todo:
         }
     }
@@ -209,12 +212,12 @@ public class AntDebuggerProxy {
     public void stepOut() {
         try {
             setTempBreakpoint(TempBreakpointType.OUT);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             // todo:
         }
     }
 
-    private void setTempBreakpoint(TempBreakpointType type) throws IOException {
+    private void setTempBreakpoint(final @NotNull TempBreakpointType type) throws IOException {
         command(DebuggerCommandFactory.CMD_SET_TEMP_BREAKPOINT, Integer.toString(type.getValue()));
         resume();
     }
@@ -223,15 +226,15 @@ public class AntDebuggerProxy {
 
     }
 
-    public void addAntDebugListener(AntDebugListener listener) {
+    public void addAntDebugListener(final AntDebugListener listener) {
         myListeners.add(listener);
     }
 
-    public void removeAntDebugListener(AntDebugListener listener) {
+    public void removeAntDebugListener(final AntDebugListener listener) {
         myListeners.remove(listener);
     }
 
-    private void command(String... args) throws IOException {
+    private void command(final String... args) throws IOException {
         myWriter.write(StringUtils.join(args, ","));
         myWriter.newLine();
         myWriter.flush();
@@ -242,10 +245,7 @@ public class AntDebuggerProxy {
             return new AntFrame[] {};
         }
 
-        List<AntFrame> result = new ArrayList<AntFrame>();
-        for (XSourcePosition pos: myStack) {
-            result.add(createFrame(pos));
-        }
+        List<AntFrame> result = myStack.stream().map(this::createFrame).collect(Collectors.toList());
         result.add(createFrame(myCurrentPosition));
         Collections.reverse(result);
         AntFrame[] arr = new AntFrame[result.size()];
@@ -253,14 +253,15 @@ public class AntDebuggerProxy {
         return arr;
     }
 
-    private AntFrame createFrame(XSourcePosition pos) {
+    @Contract("_ -> new")
+    private @NotNull AntFrame createFrame(final XSourcePosition pos) {
         XmlTag tag = getTag(pos);
         String name = tag != null ? tag.getName() : "";
         boolean target = "target".equals(name);
         if (tag != null && target) {
             String targetName = tag.getAttributeValue("name");
             if (targetName != null) {
-                name += " '" + targetName + "'";
+                name += " '" + targetName + '\'';
             }
         }
         return new AntFrame(pos, target, name);
@@ -269,30 +270,27 @@ public class AntDebuggerProxy {
     private XmlTag getTag(final XSourcePosition pos) {
         final XmlTag[] result = new XmlTag[1];
 
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-                XmlFile xmlFile = (XmlFile) PsiManager.getInstance(myProject).findFile(pos.getFile());
-                if (xmlFile != null) {
-                    result[0] = XmlUtil.getTag(xmlFile, pos.getLine());
-                }
+        ApplicationManager.getApplication().runReadAction(() -> {
+            XmlFile xmlFile = (XmlFile) PsiManager.getInstance(myProject).findFile(pos.getFile());
+            if (xmlFile != null) {
+                result[0] = XmlUtil.getTag(xmlFile, pos.getLine());
             }
         });
 
         return result[0];
     }
 
-    public String getVariableValue(String name) {
-        String value = myVars.get(name);
-        return value;
+    public String getVariableValue(final String name) {
+        return myVars.get(name);
     }
 
     public XValueChildrenList getVars() {
-        List<String> names = new ArrayList<String>(myVars.keySet());
+        List<String> names = new ArrayList<>(myVars.keySet());
         Collections.sort(names);
 
         XValueChildrenList result = new XValueChildrenList();
 
-        for (String key: names) {
+        for (final String key: names) {
             result.add(new AntVar(key, myVars.get(key)));
         }
 

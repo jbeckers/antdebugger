@@ -9,10 +9,12 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.AllIcons.Nodes;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +24,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Alexei Orischenko
@@ -33,7 +37,7 @@ public class AntRunConfigurationType implements ConfigurationType {
 
     @Override
     public @NotNull String getDisplayName() {
-        return "Ant build";
+        return "Ant Build";
     }
 
     @Override
@@ -43,7 +47,7 @@ public class AntRunConfigurationType implements ConfigurationType {
 
     @Override
     public Icon getIcon() {
-        return AllIcons.Nodes.Target;
+        return Nodes.Target;
     }
 
     @Override
@@ -60,7 +64,7 @@ public class AntRunConfigurationType implements ConfigurationType {
         return new ConfigurationFactory[]{myFactory};
     }
 
-    public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
+    public RunnerAndConfigurationSettings createConfigurationByLocation(final Location location) {
         OpenFileDescriptor fileDescriptor = location.getOpenFileDescriptor();
         VirtualFile file = fileDescriptor != null ? fileDescriptor.getFile() : null;
         if (file == null || !(file.getFileType() instanceof XmlFileType)) {
@@ -72,11 +76,11 @@ public class AntRunConfigurationType implements ConfigurationType {
         String name = target != null ? target : file.getNameWithoutExtension();
 
         RunnerAndConfigurationSettings settings =
-                RunManager.getInstance(location.getProject()).createRunConfiguration(name, myFactory);
+                RunManager.getInstance(location.getProject()).createConfiguration(name, myFactory);
 
         AntRunConfiguration templateConfiguration = (AntRunConfiguration) settings.getConfiguration();
 
-        Module module = ModuleUtil.findModuleForFile(file, location.getProject());
+        Module module = ModuleUtilCore.findModuleForFile(file, location.getProject());
         templateConfiguration.setModule(module);
 
         templateConfiguration.setBuildFile(file);
@@ -91,19 +95,19 @@ public class AntRunConfigurationType implements ConfigurationType {
         return settings;
     }
 
-    public boolean isConfigurationByLocation(RunConfiguration runConfiguration, Location location) {
+    public boolean isConfigurationByLocation(final RunConfiguration runConfiguration, final Location location) {
         if (runConfiguration instanceof AntRunConfiguration) {
             AntRunConfiguration config = (AntRunConfiguration) runConfiguration;
             OpenFileDescriptor fileDescriptor = location.getOpenFileDescriptor();
             VirtualFile file = fileDescriptor != null ? fileDescriptor.getFile() : null;
 
-          return Comparing.equal(config.getBuildFile(), file) &&
-                Comparing.equal(config.getTargetName(), getTarget(location));
+          return Objects.equals(config.getBuildFile(), file) &&
+                  Objects.equals(config.getTargetName(), getTarget(location));
         }
         return false;
     }
 
-    private static String getTarget(Location location) {
+    private static String getTarget(final Location location) {
         if (location == null) {
           return null;
         }

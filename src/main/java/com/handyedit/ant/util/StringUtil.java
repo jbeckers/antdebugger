@@ -6,15 +6,18 @@ import java.util.List;
  * @author Alexei Orischenko
  *         Date: Nov 10, 2009
  */
-public class StringUtil {
-    
+public final class StringUtil {
+
     public static final String QUOTE = "\"";
 
-    public static String quote(String s) {
+    private StringUtil() {
+    }
+
+    public static String quote(final String s) {
         return QUOTE + s + QUOTE;
     }
 
-    public static String[] toArray(List<String> names) {
+    public static String[] toArray(final List<String> names) {
         if (names == null) {
             return new String[0];
         }
@@ -25,7 +28,7 @@ public class StringUtil {
         return result;
     }
 
-    public static int findPropertyNameEnd(String text, int pos, int increment) {
+    public static int findPropertyNameEnd(final CharSequence text, int pos, final int increment) {
         if (pos < 0 || pos >= text.length()) {
             return -1;
         }
@@ -42,16 +45,14 @@ public class StringUtil {
         return pos;
     }
 
-    private static boolean isPropertyNameCharacter(char c) {
+    private static boolean isPropertyNameCharacter(final char c) {
         return Character.isLetterOrDigit(c) || c == '.' || c == '_';
     }
 
-    public static String removeLineFeeds(String s) {
-        if (s == null) {
-            return null;
-        }
+    public static String removeLineFeeds(final String s) {
+        return s == null
+                ? null
+                : s.replace("\r", "").replace("\n", "");
 
-        s = s.replace("\r", "");
-        return s.replace("\n", "");
     }
 }

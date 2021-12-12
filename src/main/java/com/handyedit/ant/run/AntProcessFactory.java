@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -24,10 +25,7 @@ public class AntProcessFactory {
     private boolean myDebug;
     private int myDebugPort;
 
-    public AntProcessFactory() {
-    }
-
-    public OSProcessHandler createProcess(AntRunConfiguration config) throws ExecutionException {
+    public OSProcessHandler createProcess(final AntRunConfiguration config) throws ExecutionException {
         GeneralCommandLine commandLine = create(config);
         if (commandLine == null) {
             return null;
@@ -40,35 +38,35 @@ public class AntProcessFactory {
     }
 
 
-    private GeneralCommandLine create(AntRunConfiguration config) {
+    private GeneralCommandLine create(final AntRunConfiguration config) {
         GeneralCommandLine result = new GeneralCommandLine();
 
         if (config.getJdkName() == null) {
-            Messages.showErrorDialog("Please select Java SDK for the project", "Ant debugger");
+            Messages.showErrorDialog("Please select Java SDK for the project", "Ant Debugger");
             return null;
         }
 
         String exePath = config.getJavaExePath();
         if (exePath == null) {
             Messages.showErrorDialog("Please configure Java SDK for module:\r\n" +
-                    "current SDK is invalid: missing java executable", "Ant debugger");
+                    "current SDK is invalid: missing java executable", "Ant Debugger");
             return null;
         }
 
         result.setExePath(exePath);
 
-        if (!checkExists(config.getBuildFolder(), "build folder")) {
+        if (checkNotExists(config.getBuildFolder(), "Build folder")) {
             return null;
         }
 
         result.setWorkDirectory(config.getBuildFolder());
 
         String antHome = config.getAntHome();
-        if (!checkExists(antHome, "Ant home")) {
+        if (checkNotExists(antHome, "Ant home")) {
             return null;
         }
 
-        result.addParameter("-Xmx" + config.getMaxMemory() + "m");
+        result.addParameter("-Xmx" + config.getMaxMemory() + 'm');
 
         result.addParameter("-classpath");
         result.addParameter(getClassPath(config));
@@ -77,17 +75,17 @@ public class AntProcessFactory {
         String antLib = FileUtil.getPath(antHome, "lib");
         result.addParameter("-Dant.library.dir=" + antLib);
 
-        if (!checkExists(antLib, "Ant lib")) {
+        if (checkNotExists(antLib, "Ant lib")) {
             return null;
         }
 
         if (myDebug) {
-            result.addParameter("-D" + AntBuildListener.DEBUG_PORT_PROPERTY + "=" + myDebugPort);
+            result.addParameter("-D" + AntBuildListener.DEBUG_PORT_PROPERTY + '=' + myDebugPort);
         }
 
         String vmParams = config.getVmParameters();
         if (vmParams != null) {
-            result.addParameter(vmParams);            
+            result.addParameter(vmParams);
         }
 
         result.addParameter(ANT_MAIN_CLASS);
@@ -119,13 +117,13 @@ public class AntProcessFactory {
         return result;
     }
 
-    private String getClassPath(AntRunConfiguration config) {
+    private static String getClassPath(final AntRunConfiguration config) {
         StringBuffer result = new StringBuffer();
         String antLib = FileUtil.getPath(config.getAntHome(), "lib");
         String antLauncher = FileUtil.getPath(antLib, ANT_LAUNCHER_JAR);
         FileUtil.addClasspath(antLauncher, result);
 
-        if (!checkExists(antLauncher, "Ant launcher")) {
+        if (checkNotExists(antLauncher, "Ant launcher")) {
             return null;
         }
 
@@ -135,20 +133,20 @@ public class AntProcessFactory {
         }
 
         VirtualFile vAntLib = FileUtil.findFile(antLib);
-        for (VirtualFile child: vAntLib.getChildren()) {
+        for (final VirtualFile child: vAntLib.getChildren()) {
             if (!child.isDirectory() && "jar".equals(child.getExtension())) {
                 FileUtil.addClasspath(child.getPath(), result);
             }
         }
 
         String pluginLib = IdeaConfigUtil.getPluginClassesFolder(AntBuildListener.class);
-        FileUtil.addClasspath(pluginLib, result);        
+        FileUtil.addClasspath(pluginLib, result);
 
-        for (String lib: config.getAdditionalSdkClasses()) {
+        for (final String lib: config.getAdditionalSdkClasses()) {
             FileUtil.addClasspath(lib, result);
         }
 
-        for (String lib: config.getAdditionalAntClasses()) {
+        for (final String lib: config.getAdditionalAntClasses()) {
             FileUtil.addClasspath(lib, result);
         }
 
@@ -159,18 +157,19 @@ public class AntProcessFactory {
         return new AntProcessFactory();
     }
 
-    public static AntProcessFactory getInstance(int debugPort) {
+    public static AntProcessFactory getInstance(final int debugPort) {
         AntProcessFactory res = new AntProcessFactory();
         res.myDebug = true;
         res.myDebugPort = debugPort;
         return res;
     }
 
-    private static boolean checkExists(String path, String name) {
+    @SuppressWarnings("UnstableApiUsage")
+    private static boolean checkNotExists(final String path, @DialogMessage final String name) {
         if (!new File(path).exists()) {
-            Messages.showErrorDialog(name + " doesn't exist: " + path, "Ant debugger");
-            return false;
+            Messages.showErrorDialog(name + " doesn't exist: " + path, "Ant Debugger");
+            return true;
         }
-        return true;
+        return false;
     }
 }

@@ -18,19 +18,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AntDebuggerEvaluator extends XDebuggerEvaluator {
 
-    private AntStackFrame myFrame;
+    private final AntStackFrame myFrame;
 
-    public AntDebuggerEvaluator(AntStackFrame frame) {
+    AntDebuggerEvaluator(final AntStackFrame frame) {
         myFrame = frame;
     }
 
     @Override
-    public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
+    public void evaluate(@NotNull final String expression, @NotNull final XEvaluationCallback callback, @Nullable final XSourcePosition expressionPosition) {
         String value = myFrame.getDebuggerProxy().getVariableValue(expression);
         callback.evaluated(new AntVar(expression, value));
     }
 
-    public TextRange getExpressionRangeAtOffset(Project project, Document document, int i) {
+    public TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int i) {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
         if (file != null) {
             //TODO: What was the AntNameIdentifier doing?

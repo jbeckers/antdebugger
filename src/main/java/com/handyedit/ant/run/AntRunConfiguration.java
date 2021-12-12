@@ -1,8 +1,5 @@
 package com.handyedit.ant.run;
 
-import java.io.File;
-import java.util.*;
-
 import com.handyedit.ant.util.FileUtil;
 import com.handyedit.ant.util.XmlUtil;
 import com.intellij.execution.ExecutionException;
@@ -23,9 +20,13 @@ import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * @author Alexei Orischenko
- *         Date: Nov 4, 2009
+ * Date: Nov 4, 2009
  */
 public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element> { // todo: store config between runs
 
@@ -44,23 +45,23 @@ public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurati
 
     private int myMaxMemory = DEFAULT_MAX_MEMORY;
 
-    public AntRunConfiguration(Project project, ConfigurationFactory factory, String name) {
+    AntRunConfiguration(final Project project,
+                        final ConfigurationFactory factory,
+                        final String name) {
         super(name, new RunConfigurationModule(project), factory);
     }
 
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment executionEnvironment) throws ExecutionException {
-        return new AntRunCommandLineState(executionEnvironment, this);
+    @Override
+    public RunProfileState getState(@NotNull final Executor executor,
+                                    @NotNull final ExecutionEnvironment environment) throws ExecutionException {
+        return new AntRunCommandLineState(environment, this);
     }
 
-    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-        List<String> names = new ArrayList<String>();
-        for (Sdk sdk: ProjectJdkTable.getInstance().getAllJdks()) {
-            if (sdk.getSdkType() instanceof JavaSdkType) {
-                names.add(sdk.getName());
-            }
-        }
-        Collections.sort(names);
-        return new AntRunSettingsEditor(names, getConfigurationModule().getProject());
+    @Override
+    public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+        return new AntRunSettingsEditor(
+                ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()),
+                getConfigurationModule().getProject());
     }
 
     @Override
@@ -68,37 +69,34 @@ public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurati
         return Collections.singleton(ModuleManager.getInstance(getProject()).getModules()[0]);
     }
 
-    @Override
-    protected ModuleBasedConfiguration createInstance() {
-        return new AntRunConfiguration(getProject(), getFactory(), "");
-    }
-
-    public String getBuildFolder() {
+    String getBuildFolder() {
         if (myBuildFile == null) {
             return null;
         }
 
         VirtualFile parent = myBuildFile.getParent();
-        return parent != null ? parent.getPath() : null;
+        return parent != null
+                ? parent.getPath()
+                : null;
     }
 
     public VirtualFile getBuildFile() {
         return myBuildFile;
     }
 
-    public void setBuildFile(VirtualFile file) {
+    void setBuildFile(final VirtualFile file) {
         myBuildFile = file;
     }
 
-    public VirtualFile getTasksFolder() {
+    VirtualFile getTasksFolder() {
         return myTasksFolder;
     }
 
-    public void setTasksFolder(VirtualFile folder) {
+    void setTasksFolder(final VirtualFile folder) {
         myTasksFolder = folder;
     }
 
-    public boolean isDefaultBuildFile() {
+    boolean isDefaultBuildFile() {
         return myBuildFile != null && DEFAULT_BUILD_FILE.equals(myBuildFile.getName());
     }
 
@@ -106,62 +104,54 @@ public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurati
         return myDebugPort;
     }
 
-    public void setDebugPort(int debugPort) {
+    void setDebugPort(final int debugPort) {
         myDebugPort = debugPort;
     }
 
-    public String getJavaExePath() {
+    String getJavaExePath() {
         Sdk sdk = getSdk();
         JavaSdkType javaSdk = getJavaSdk(sdk);
-        if (sdk != null && javaSdk != null) {
-            return javaSdk.getVMExecutablePath(sdk);
-        }
-        return null;
+        return sdk == null || javaSdk == null
+                ? null
+                : javaSdk.getVMExecutablePath(sdk);
     }
 
 
-    public String getJdkTools() {
+    String getJdkTools() {
         Sdk sdk = getSdk();
         JavaSdkType javaSdk = getJavaSdk(sdk);
-        if (sdk != null && javaSdk != null) {
-            return javaSdk.getToolsPath(sdk);
-        }
-        return null;
+        return sdk == null || javaSdk == null
+                ? null
+                : javaSdk.getToolsPath(sdk);
     }
 
-    public List<String> getAdditionalSdkClasses() {
-        List<String> result = new ArrayList<String>();
+    List<String> getAdditionalSdkClasses() {
+        List<String> result = new ArrayList<>();
 
         Sdk sdk = getSdk();
         if (sdk != null) {
             String jrePath = sdk.getHomePath() + File.separator + "jre";
 
-            for (String url : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
-                url = PathUtil.toPresentableUrl(url);
-                if (!url.startsWith(jrePath)) {
-                    result.add(url);
-                }
-            }
+            result = Arrays.stream(sdk.getRootProvider().getUrls(OrderRootType.CLASSES)).map(PathUtil::toPresentableUrl)
+                    .filter(url -> !url.startsWith(jrePath)).collect(Collectors.toList());
         }
         return result;
     }
 
-    public List<String> getAdditionalAntClasses() {
-        List<String> result = new ArrayList<String>();
+    List<String> getAdditionalAntClasses() {
+        List<String> result = new ArrayList<>();
 
         if (myTasksFolder != null) {
-            for (VirtualFile child: myTasksFolder.getChildren()) {
-                if (!child.isDirectory() && "jar".equals(child.getExtension())) {
-                    result.add(child.getPath());
-                }
-            }
+            result = Arrays.stream(myTasksFolder.getChildren())
+                    .filter(child -> !child.isDirectory() && "jar".equals(child.getExtension()))
+                    .map(VirtualFile::getPath).collect(Collectors.toList());
         }
         return result;
     }
 
-    private static JavaSdkType getJavaSdk(Sdk sdk) {
+    private static JavaSdkType getJavaSdk(final Sdk sdk) {
         if (sdk != null) {
-          SdkTypeId sdkType = sdk.getSdkType();
+            SdkTypeId sdkType = sdk.getSdkType();
             if (sdkType instanceof JavaSdkType) {
                 return (JavaSdkType) sdkType;
             }
@@ -173,7 +163,7 @@ public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurati
         return ProjectJdkTable.getInstance().findJdk(myJdkName);
     }
 
-    public String getAntHome() {
+    String getAntHome() {
         File antFolder = new File(PathManager.getLibPath(), "ant");
         return antFolder.getPath();
     }
@@ -188,7 +178,7 @@ public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurati
     private static final String ATTR_MAX_MEMORY = "max-memory";
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(final @NotNull Element element) throws WriteExternalException {
         super.writeExternal(element);
 
         VirtualFile buildFile = getBuildFile();
@@ -222,7 +212,7 @@ public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurati
     }
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(final @NotNull Element element) throws InvalidDataException {
         super.readExternal(element);
 
         Element file = element.getChild(ELEM_FILE);
@@ -241,7 +231,7 @@ public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurati
         Element vmParamsElem = element.getChild(ELEM_VM_PARAMS);
         if (vmParamsElem != null) {
             String vmParams = vmParamsElem.getText();
-            if (!"".equals(vmParams)) {
+            if (vmParams == null || !vmParams.isEmpty()) {
                 myVmParameters = vmParams;
             }
         }
@@ -254,51 +244,53 @@ public class AntRunConfiguration extends ModuleBasedConfiguration<RunConfigurati
         String levelStr = element.getAttributeValue(ATTR_LOGGING_LEVEL);
         int level = 0;
         if (levelStr != null) {
-          try {
-            level = Integer.parseInt(levelStr);
-          } catch (NumberFormatException e) {
-          }
+            try {
+                level = Integer.parseInt(levelStr);
+            } catch (final NumberFormatException ignored) {
+            }
         }
         myLoggingLevel = AntLoggingLevel.get(level);
     }
 
-    public String getJdkName() {
+    String getJdkName() {
         return myJdkName;
     }
 
-    public void setJdkName(String jdkName) {
+    void setJdkName(final String jdkName) {
         myJdkName = jdkName;
     }
 
-    public int getMaxMemory() {
+    int getMaxMemory() {
         return myMaxMemory;
     }
 
-    public void setMaxMemory(int maxMemory) {
+    void setMaxMemory(final int maxMemory) {
         myMaxMemory = maxMemory;
     }
 
-    public String getTargetName() {
+    String getTargetName() {
         return myTargetName;
     }
 
-    public void setTargetName(String targetName) {
+    void setTargetName(final String targetName) {
         myTargetName = targetName;
     }
 
-    public String getVmParameters() {
+    String getVmParameters() {
         return myVmParameters;
     }
 
-    public void setVmParameters(String vmParameters) {
+    void setVmParameters(final String vmParameters) {
         myVmParameters = vmParameters;
     }
 
-    public AntLoggingLevel getLoggingLevel() {
-        return myLoggingLevel != null ? myLoggingLevel : AntLoggingLevel.DEFAULT;
+    AntLoggingLevel getLoggingLevel() {
+        return myLoggingLevel != null
+                ? myLoggingLevel
+                : AntLoggingLevel.DEFAULT;
     }
 
-    public void setLoggingLevel(AntLoggingLevel loggingLevel) {
+    void setLoggingLevel(final AntLoggingLevel loggingLevel) {
         myLoggingLevel = loggingLevel;
     }
 }

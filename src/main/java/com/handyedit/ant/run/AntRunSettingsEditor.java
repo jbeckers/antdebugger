@@ -19,6 +19,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Alexei Orischenko
@@ -40,10 +42,9 @@ public class AntRunSettingsEditor extends SettingsEditor<AntRunConfiguration> {
 
     private Project myProject;
 
-    public AntRunSettingsEditor(java.util.List<String> jdkNames, Project project) {
+    public AntRunSettingsEditor(@NotNull List<Sdk> jdks, Project project) {
         myProject = project;
-        java.util.List<String> sdks = new ArrayList<String>();
-        sdks.addAll(jdkNames);
+        List<String> sdks = jdks.stream().map(Sdk::getName).collect(Collectors.toList());
         sdks.add(0, "[None]");
         myJdkName = new JComboBox(com.handyedit.ant.util.StringUtil.toArray(sdks));
         myTargetName = new JComboBox();

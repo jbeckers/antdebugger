@@ -7,14 +7,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 7, 2009
+ * Date: Nov 7, 2009
  */
-public class XmlUtil {
+public final class XmlUtil {
 
-    public static XmlTag getTag(@NotNull XmlFile file, int line) {
+    private XmlUtil() {
+    }
+
+    public static @Nullable XmlTag getTag(@NotNull final XmlFile file,
+                                          final int line) {
         Document doc = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
         XmlDocument xmlDoc = file.getDocument();
         if (doc == null || xmlDoc == null) {
@@ -30,7 +37,7 @@ public class XmlUtil {
             return null;
         }
 
-        for (XmlTag child: tag.getSubTags()) {
+        for (final XmlTag child : tag.getSubTags()) {
             int childOffset = child.getTextOffset();
             if (startOffset <= childOffset && childOffset <= endOffset) {
                 return child;
@@ -39,33 +46,31 @@ public class XmlUtil {
         return tag;
     }
 
-    public static int getIntAttribute(Element elem, String name, int defaultValue) {
+    public static int getIntAttribute(final Element elem,
+                                      final String name,
+                                      final int defaultValue) {
         String val = elem.getAttributeValue(name);
-        if (val == null || "".equals(val)) {
+        if (val == null || val.isEmpty()) {
             return defaultValue;
         }
         try {
             return Integer.parseInt(val);
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             return defaultValue;
         }
     }
 
-    public static XmlToken getStartTagEnd(XmlTag tag) {
-        if (tag == null) {
-            return null;
-        }
+    public static XmlToken getStartTagEnd(final PsiElement tag) {
+        return tag == null
+                ? null
+                : Arrays.stream(tag.getChildren())
+                        .filter(XmlToken.class::isInstance)
+                        .map(XmlToken.class::cast)
+                        .filter(token ->
+                                XmlTokenType.XML_TAG_END.equals(token.getTokenType())
+                                        || XmlTokenType.XML_EMPTY_ELEMENT_END.equals(token.getTokenType()))
+                        .findFirst()
+                        .orElse(null);
 
-        for (PsiElement elem: tag.getChildren()) {
-            if (elem instanceof XmlToken) {
-                XmlToken token = (XmlToken) elem;
-                if (XmlTokenType.XML_TAG_END.equals(token.getTokenType()) ||
-                        XmlTokenType.XML_EMPTY_ELEMENT_END.equals(token.getTokenType())) {
-                    return token;
-                }
-            }
-        }
-
-        return null;
     }
 }

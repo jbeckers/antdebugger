@@ -1,6 +1,9 @@
 package com.handyedit.ant.listener;
 
 import org.apache.tools.ant.Location;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Alexei Orischenko
@@ -8,44 +11,46 @@ import org.apache.tools.ant.Location;
  */
 public class BreakpointPosition {
     private int myLine;
-    private String myFile;
+    private final String myFile;
 
-    public BreakpointPosition() {
-    }
-
-    public BreakpointPosition(int line, String file) {
+    public BreakpointPosition(final int line,
+                              final String file) {
         myLine = line;
         myFile = file;
     }
 
-    public BreakpointPosition(Location loc) {
-        myLine = loc.getLineNumber() - 1;
-        myFile = loc.getFileName();
+    BreakpointPosition(final @NotNull Location loc) {
+        this(loc.getLineNumber() -1, loc.getFileName());
     }
 
     public int getLine() {
         return myLine;
     }
 
-    public void setLine(int line) {
+    public void setLine(final int line) {
         myLine = line;
-    }
-
-    public int hashCode() {
-        return myLine;
-    }
-
-    public boolean equals(Object o) {
-        if (o != null && o instanceof BreakpointPosition) {
-            BreakpointPosition pos = (BreakpointPosition) o;
-            return pos.myLine == myLine && myFile != null && myFile.equals(pos.myFile);
-        }
-        return false;
     }
 
     @Override
     public String toString() {
-        return myFile + ":" + myLine; 
+        return myFile + ':' + myLine;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final BreakpointPosition that = (BreakpointPosition) obj;
+        return myLine == that.myLine && Objects.equals(myFile, that.myFile);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(myLine, myFile);
     }
 }
 

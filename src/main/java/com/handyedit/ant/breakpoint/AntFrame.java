@@ -8,11 +8,13 @@ import com.intellij.xdebugger.XSourcePosition;
  */
 public class AntFrame {
 
-    private XSourcePosition mySourcePosition;
-    private boolean myTarget;
-    private String myName;
+    private final XSourcePosition mySourcePosition;
+    private final boolean myTarget;
+    private final String myName;
 
-    public AntFrame(XSourcePosition pos, boolean target, String name) {
+    AntFrame(final XSourcePosition pos,
+             final boolean target,
+             final String name) {
         mySourcePosition = pos;
         myTarget = target;
         myName = name;

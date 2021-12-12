@@ -5,25 +5,27 @@ import com.handyedit.ant.listener.cmd.DebuggerCommandFactory;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 5, 2009
+ * Date: Nov 5, 2009
  */
-public class DebuggerCommandListener {
+public final class DebuggerCommandListener {
 
-    private DebuggerCommandFactory myFactory;
-    private BufferedReader myReader;
-    private BufferedWriter myWriter;
+    private final DebuggerCommandFactory myFactory;
+    private final BufferedReader myReader;
+    private final BufferedWriter myWriter;
 
-    public DebuggerCommandListener(BreakpointManager manager, BufferedReader reader, BufferedWriter writer) {
+    private DebuggerCommandListener(final BreakpointManager manager,
+                                    final BufferedReader reader,
+                                    final BufferedWriter writer) {
         myFactory = new DebuggerCommandFactory(manager);
         myReader = reader;
         myWriter = writer;
     }
 
     public void run() throws IOException {
-
         DebuggerCommand c;
         while ((c = read()) != null) {
             c.execute(myWriter);
@@ -50,7 +52,7 @@ public class DebuggerCommandListener {
         }
     }
 
-     // reads sequence of breakpoint commands terminated by other command
+    // reads sequence of breakpoint commands terminated by other command
     private void readBreakpoints() throws IOException {
         DebuggerCommand c;
         while ((c = readBreakpoint()) != null) {
@@ -58,52 +60,37 @@ public class DebuggerCommandListener {
         }
     }
 
-    public static DebuggerCommandListener start(BreakpointManager manager, int port) throws IOException {
-        ServerSocket listenSocket = new ServerSocket(port);
-        listenSocket.setSoTimeout(60000);
-        Socket s = listenSocket.accept();
+    static DebuggerCommandListener start(final BreakpointManager manager,
+                                         final int port) throws IOException {
+        try (ServerSocket listenSocket = new ServerSocket(port)) {
+            listenSocket.setSoTimeout(60000);
+            try (Socket s = listenSocket.accept()) {
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
+                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8));
 
-        final DebuggerCommandListener listener = new DebuggerCommandListener(manager, in, out);
-        listener.readBreakpoints();
+                final DebuggerCommandListener listener = new DebuggerCommandListener(manager, in, out);
+                listener.readBreakpoints();
 
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    listener.run();
-                } catch (IOException e) {
-                }
+                new Thread(() -> {
+                    try {
+                        listener.run();
+                    } catch (final IOException ignored) {
+                    }
+                }).start();
+
+                return listener;
             }
-        });
-
-        t.start();
-
-        return listener;
+        }
     }
 
-    public void sendCommand(String... args) throws IOException {
-        String s = join(args);
-        myWriter.write(s);
+    void sendCommand(final String... args) throws IOException {
+        myWriter.write(String.join(",", args));
         myWriter.newLine();
         myWriter.flush();
     }
 
-    private String join(String... arr) {
-        boolean first = true;
-        StringBuffer result = new StringBuffer();
-        for (String s : arr) {
-            if (!first) {
-                result.append(",");
-            }
-            first =  false;
-            result.append(s);
-        }
-        return result.toString();
-    }
-
-    public void close() {
+    void close() {
 /*
         try {
             if (myReader != null) {

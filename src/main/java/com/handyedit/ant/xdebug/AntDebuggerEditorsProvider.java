@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexei Orischenko
  *         Date: Nov 6, 2009
  */
-public class AntDebuggerEditorsProvider extends XDebuggerEditorsProvider {
+class AntDebuggerEditorsProvider extends XDebuggerEditorsProvider {
 
     @NotNull
     @Override
@@ -23,10 +24,12 @@ public class AntDebuggerEditorsProvider extends XDebuggerEditorsProvider {
         return XmlFileType.INSTANCE;
     }
 
-    @NotNull
     @Override
-    public Document createDocument(@NotNull Project project, @NotNull String text, @Nullable XSourcePosition sourcePosition, @NotNull EvaluationMode mode) {
-        PsiFile psiFile = new AntExpressionCodeFragmentImpl(project, "AntDebugger.expr", text);
+    public @NotNull Document createDocument(@NotNull final Project project,
+                                            @NotNull final XExpression expression,
+                                            @Nullable final XSourcePosition sourcePosition,
+                                            @NotNull final EvaluationMode mode) {
+        PsiFile psiFile = new AntExpressionCodeFragmentImpl(project, "AntDebugger.expr", expression.getExpression());
         return PsiDocumentManager.getInstance(project).getDocument(psiFile);
     }
 }

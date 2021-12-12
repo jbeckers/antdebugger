@@ -2,9 +2,9 @@ package com.handyedit.ant.xdebug;
 
 import com.handyedit.ant.breakpoint.AntDebuggerProxy;
 import com.handyedit.ant.breakpoint.AntFrame;
-import com.intellij.icons.AllIcons;
+import com.intellij.icons.AllIcons.Debugger;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -14,16 +14,14 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 6, 2009
+ * Date: Nov 6, 2009
  */
-public class AntStackFrame extends XStackFrame {
+class AntStackFrame extends XStackFrame {
 
-    protected Project myProject;
+    private final AntDebuggerProxy myDebuggerProxy;
+    private final XSourcePosition mySourcePosition;
 
-    protected AntDebuggerProxy myDebuggerProxy;
-    protected XSourcePosition mySourcePosition;
-
-    private String myName;
+    private final String myName;
 
     @Override
     public Object getEqualityObject() {
@@ -33,16 +31,15 @@ public class AntStackFrame extends XStackFrame {
     @Override
     public void computeChildren(@NotNull final XCompositeNode node) {
         try {
-
-      node.addChildren(myDebuggerProxy.getVars(), true);
-        } catch (Exception e) {
+            node.addChildren(myDebuggerProxy.getVars(), true);
+        } catch (final Exception e) {
             super.computeChildren(node);
         }
     }
 
-    public AntStackFrame(final Project project,
-                         final AntDebuggerProxy debuggerProxy, AntFrame frame) {
-        myProject = project;
+    AntStackFrame(final Project project,
+                  final AntDebuggerProxy debuggerProxy,
+                  final @NotNull AntFrame frame) {
         myDebuggerProxy = debuggerProxy;
         mySourcePosition = frame.getSourcePosition();
 
@@ -54,22 +51,19 @@ public class AntStackFrame extends XStackFrame {
         return mySourcePosition;
     }
 
-    public void customizePresentation(final SimpleColoredComponent component) {
+    @Override
+    public void customizePresentation(@NotNull final ColoredTextContainer component) {
         final XSourcePosition position = getSourcePosition();
         if (position != null) {
-            appendText(component, myName);
-            appendText(component, " ");
-            appendText(component, position.getFile().getName());
-            appendText(component, ":");
-            appendText(component, Integer.toString(position.getLine() + 1));
-            component.setIcon(AllIcons.Debugger.Frame);
+            component.append(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            component.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            component.append(":", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            component.append(Integer.toString(position.getLine() + 1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            component.setIcon(Debugger.Frame);
         } else {
             component.append("Stack frame not available", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
-    }
-
-    private static void appendText(SimpleColoredComponent component, String text) {
-        component.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     @Override
@@ -77,7 +71,7 @@ public class AntStackFrame extends XStackFrame {
         return new AntDebuggerEvaluator(this);
     }
 
-    public AntDebuggerProxy getDebuggerProxy() {
+    AntDebuggerProxy getDebuggerProxy() {
         return myDebuggerProxy;
     }
 }

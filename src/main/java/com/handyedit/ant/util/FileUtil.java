@@ -4,51 +4,58 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 10, 2009
+ * Date: Nov 10, 2009
  */
-public class FileUtil {
+public final class FileUtil {
 
     private static final String FILE_URL_PREFIX = "file:///";
 
-    public static void addClasspath(String path, StringBuffer result) {
+    private FileUtil() {
+    }
+
+    public static void addClasspath(final String path,
+                                    final @NotNull StringBuffer result) {
         result.append(path);
         result.append(File.pathSeparator);
     }
 
-    public static String getPath(String parent, String child) {
+    @Contract(pure = true)
+    public static @NotNull String getPath(final String parent,
+                                          final String child) {
         return parent + File.separator + child;
     }
 
-    public static VirtualFile findFile(String path) {
-        if (path == null || "".equals(path)) {
+    public static VirtualFile findFile(final String path) {
+        if (path == null || path.isEmpty()) {
             return null;
         }
 
-        if (!path.startsWith(FILE_URL_PREFIX)) {
-            path = FILE_URL_PREFIX + path;
-        }
+        return path.startsWith(FILE_URL_PREFIX)
+                ? VirtualFileManager.getInstance().findFileByUrl(path)
+                : VirtualFileManager.getInstance().findFileByUrl(FILE_URL_PREFIX + path);
 
-        return VirtualFileManager.getInstance().findFileByUrl(path);
     }
 
-    public static String getAbsolutePath(String path, String folder) {
+    static @Nullable String getAbsolutePath(final String path,
+                                            final String folder) {
         if (StringUtils.isEmpty(path)) {
             return null;
         }
 
-        if (isAbsolutePath(path)) {
-            return path;
-        } else {
-            return getPath(folder, path);
-        }
+        return isAbsolutePath(path)
+                ? path
+                : getPath(folder, path);
     }
 
-    private static boolean isAbsolutePath(String path) {
+    private static boolean isAbsolutePath(final String path) {
         if (StringUtils.isEmpty(path)) {
             return false;
         }

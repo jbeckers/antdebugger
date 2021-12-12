@@ -2,6 +2,7 @@ package com.handyedit.ant.util;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -9,35 +10,37 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 12, 2009
+ * Date: Nov 12, 2009
  */
-public class IdeaConfigUtil {
+public final class IdeaConfigUtil {
 
-    public static Sdk getJdk(Module module, @NotNull Project project) {
-        Sdk jdk;
+    private IdeaConfigUtil() {
+    }
+
+    public static @Nullable Sdk getJdk(@Nullable final Module module,
+                                       @NotNull final Project project) {
         if (module != null) {
-            jdk = ModuleRootManager.getInstance(module).getSdk();
-            if (jdk != null && jdk.getSdkType() instanceof JavaSdkType) {
-                return jdk;
+            Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
+            if (moduleSdk != null && moduleSdk.getSdkType() instanceof JavaSdkType) {
+                return moduleSdk;
             }
         }
 
-        jdk = ProjectRootManager.getInstance(project).getProjectSdk();
-        if (jdk != null && jdk.getSdkType() instanceof JavaSdkType) {
-            return jdk;
+        Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+        if (projectSdk != null && projectSdk.getSdkType() instanceof JavaSdkType) {
+            return projectSdk;
         }
 
-        Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
-        for (Sdk sdk: sdks) {
-            if (sdk != null && sdk.getSdkType() instanceof  JavaSdkType) {
-                return sdk;
-            }
-        }
+        return ProjectJdkTable.getInstance()
+                .getSdksOfType(JavaSdk.getInstance())
+                .stream()
+                .findFirst()
+                .orElse(null);
 
-        return null;
     }
 
     /**
@@ -46,7 +49,7 @@ public class IdeaConfigUtil {
      * @param pluginClass plugin class
      * @return path to folder or Jar file
      */
-    public static String getPluginClassesFolder(Class pluginClass) {
+    public static @NotNull String getPluginClassesFolder(final Class<?> pluginClass) {
         return PathUtil.getJarPathForClass(pluginClass);
     }
 }

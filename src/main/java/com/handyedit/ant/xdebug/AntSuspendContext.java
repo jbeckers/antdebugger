@@ -4,18 +4,20 @@ import com.handyedit.ant.breakpoint.AntDebuggerProxy;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 6, 2009
+ * Date: Nov 6, 2009
  */
-public class AntSuspendContext extends XSuspendContext {
+class AntSuspendContext extends XSuspendContext {
 
     private AntExecutionStack myExecutionStack;
-    private XExecutionStack[] myExecutionStacks = XExecutionStack.EMPTY_ARRAY;
+    private XExecutionStack @NotNull [] myExecutionStacks = XExecutionStack.EMPTY_ARRAY;
 
 
-    public AntSuspendContext(Project project, AntDebugProcess debugProcess) {
+    AntSuspendContext(final Project project,
+                      final @NotNull AntDebugProcess debugProcess) {
         AntDebuggerProxy debuggerProxy = debugProcess.myDebuggerProxy;
         if (!debuggerProxy.isReady()) {
             return;
@@ -33,7 +35,7 @@ public class AntSuspendContext extends XSuspendContext {
     }
 
     @Override
-    public XExecutionStack[] getExecutionStacks() {
+    public XExecutionStack @NotNull [] getExecutionStacks() {
         return myExecutionStacks;
     }
 

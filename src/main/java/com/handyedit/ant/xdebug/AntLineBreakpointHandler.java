@@ -15,14 +15,15 @@ import java.util.Map;
  */
 public class AntLineBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {
 
-    private AntDebugProcess myDebugProcess;
-    Map<BreakpointPosition, XLineBreakpoint> myBreakpointByPosition = new HashMap<BreakpointPosition, XLineBreakpoint>();
+    private final AntDebugProcess myDebugProcess;
+    Map<BreakpointPosition, XLineBreakpoint> myBreakpointByPosition = new HashMap<>();
 
-    public AntLineBreakpointHandler(@NotNull final AntDebugProcess debugProcess) {
+    AntLineBreakpointHandler(@NotNull final AntDebugProcess debugProcess) {
         super(AntLineBreakpointType.class);
         myDebugProcess = debugProcess;
     }
 
+    @Override
     public void registerBreakpoint(@NotNull final XLineBreakpoint<XBreakpointProperties> xBreakpoint) {
         BreakpointPosition breakpoint = new BreakpointPosition(xBreakpoint);
         breakpoint = breakpoint.toLineEnd(myDebugProcess.getProject());
@@ -30,6 +31,7 @@ public class AntLineBreakpointHandler extends XBreakpointHandler<XLineBreakpoint
         myBreakpointByPosition.put(breakpoint, xBreakpoint);
     }
 
+    @Override
     public void unregisterBreakpoint(@NotNull final XLineBreakpoint<XBreakpointProperties> xBreakpoint, final boolean temporary) {
         BreakpointPosition breakpoint = new BreakpointPosition(xBreakpoint);
         breakpoint = breakpoint.toLineEnd(myDebugProcess.getProject());

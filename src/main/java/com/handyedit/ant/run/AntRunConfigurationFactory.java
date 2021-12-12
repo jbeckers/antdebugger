@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.AllIcons.Nodes;
 import com.intellij.openapi.project.Project;
 import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
@@ -16,23 +17,23 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AntRunConfigurationFactory extends ConfigurationFactory {
 
-    public AntRunConfigurationFactory(@NotNull ConfigurationType type) {
+    AntRunConfigurationFactory(@NotNull final ConfigurationType type) {
         super(type);
     }
 
     @Override
-    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
         return new AntRunConfiguration(project, this, "");
     }
 
     @Override
     public @NotNull String getName() {
-        return "Ant build";
+        return "Ant Build";
     }
 
     @Override
     public Icon getIcon() {
-        return AllIcons.Nodes.Target;
+        return Nodes.Target;
     }
 
 

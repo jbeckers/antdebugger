@@ -3,9 +3,11 @@ package com.handyedit.ant.xdebug;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexei Orischenko
@@ -13,23 +15,25 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AntLineBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
 
-    private XDebuggerEditorsProvider myEditorsProvider = new AntDebuggerEditorsProvider();
+    private final XDebuggerEditorsProvider myEditorsProvider = new AntDebuggerEditorsProvider();
 
     public AntLineBreakpointType() {
         super("ant-line", "Ant breakpoints");
     }
 
     @Override
-    public XBreakpointProperties createBreakpointProperties(@NotNull VirtualFile virtualFile, int i) {
+    public XBreakpointProperties createBreakpointProperties(@NotNull final VirtualFile file, final int line) {
         return null;
     }
 
-    public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
+    @Override
+    public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull final Project project) {
         return "xml".equals(file.getExtension());
     }
 
     @Override
-    public XDebuggerEditorsProvider getEditorsProvider() {
+    public @Nullable XDebuggerEditorsProvider getEditorsProvider(@NotNull final XLineBreakpoint<XBreakpointProperties> breakpoint,
+                                                                 @NotNull final Project project) {
         return myEditorsProvider;
     }
 }

@@ -19,19 +19,21 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AntRunCommandLineState extends CommandLineState {
 
-    private AntRunConfiguration myConfig;
+    private final AntRunConfiguration myConfig;
 
-    public AntRunCommandLineState(ExecutionEnvironment environment, AntRunConfiguration config) {
+    AntRunCommandLineState(final ExecutionEnvironment environment,
+                           final AntRunConfiguration config) {
         super(environment);
         myConfig = config;
     }
 
     @Override
-    protected OSProcessHandler startProcess() throws ExecutionException {
+    protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
         return AntProcessFactory.getInstance().createProcess(myConfig);
     }
 
-    public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+    @Override
+    public @NotNull ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
       ProcessHandler processHandler = startProcess();
       ConsoleView console = ConsoleUtil.createAttachedConsole(myConfig.getProject(), processHandler);
 

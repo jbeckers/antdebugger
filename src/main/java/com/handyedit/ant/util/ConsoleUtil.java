@@ -5,14 +5,19 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 10, 2009
+ * Date: Nov 10, 2009
  */
-public class ConsoleUtil {
+public final class ConsoleUtil {
 
-    public static ConsoleView createAttachedConsole(Project project, ProcessHandler processHandler) {
+    private ConsoleUtil() {
+    }
+
+    public static @NotNull ConsoleView createAttachedConsole(final Project project,
+                                                             final ProcessHandler processHandler) {
         TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
 
         ConsoleView console = consoleBuilder.getConsole();

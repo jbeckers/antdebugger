@@ -1,6 +1,7 @@
 package com.handyedit.ant.util;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.compiler.options.CompileStepBeforeRun.MakeBeforeRunTask;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,8 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -20,9 +23,9 @@ import java.util.Set;
 
 /**
  * @author Alexei Orischenko
- *         Date: Dec 14, 2009
+ * Date: Dec 14, 2009
  */
-public class AntUtil {
+public final class AntUtil {
 
     private static final String TAG_TARGET = "target";
     private static final String ATTR_NAME = "name";
@@ -30,7 +33,11 @@ public class AntUtil {
     private static final String TAG_IMPORT = "import";
     private static final String ATTR_FILE = "file";
 
-    public static Set<String> getTargets(VirtualFile antFile, Project project) {
+    private AntUtil() {
+    }
+
+    public static @NotNull Set<String> getTargets(final VirtualFile antFile,
+                                                  final Project project) {
         Set<String> result = new HashSet<String>();
 
         if (antFile == null) {
@@ -38,7 +45,7 @@ public class AntUtil {
         }
 
         PsiFile psiFile = PsiManager.getInstance(project).findFile(antFile);
-        if (psiFile == null || !(psiFile instanceof XmlFile)) {
+        if (!(psiFile instanceof XmlFile)) {
             return result;
         }
         XmlFile xmlFile = (XmlFile) psiFile;
@@ -50,7 +57,7 @@ public class AntUtil {
 
         XmlTag root = xmlDoc.getRootTag();
         if (root != null) {
-            for (XmlTag child: root.getSubTags()) {
+            for (final XmlTag child : root.getSubTags()) {
                 String tagName = child.getName();
                 if (TAG_TARGET.equals(tagName)) {
                     String name = child.getAttributeValue(ATTR_NAME);
@@ -72,7 +79,7 @@ public class AntUtil {
         return result;
     }
 
-    public static String getTarget(PsiElement elem) {
+    public static @Nullable String getTarget(final PsiElement elem) {
         XmlTag tag = PsiTreeUtil.getParentOfType(elem, XmlTag.class);
         while (tag != null) {
             if (TAG_TARGET.equals(tag.getName())) {
@@ -84,10 +91,10 @@ public class AntUtil {
         return null;
     }
 
-    public static void disableCompileBeforeRun(RunConfiguration config) {
+    public static void disableCompileBeforeRun(final @NotNull RunConfiguration config) {
         RunManagerEx manager = RunManagerEx.getInstanceEx(config.getProject());
-        List<CompileStepBeforeRun.MakeBeforeRunTask> tasks = manager.getBeforeRunTasks(config, CompileStepBeforeRun.ID);
-        for (CompileStepBeforeRun.MakeBeforeRunTask beforeRunTask : tasks) {
+        List<MakeBeforeRunTask> tasks = manager.getBeforeRunTasks(config, CompileStepBeforeRun.ID);
+        for (final MakeBeforeRunTask beforeRunTask : tasks) {
             beforeRunTask.setEnabled(false);
         }
     }

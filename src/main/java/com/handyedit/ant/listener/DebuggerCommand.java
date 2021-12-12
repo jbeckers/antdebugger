@@ -8,6 +8,7 @@ import java.io.OutputStream;
  * @author Alexei Orischenko
  *         Date: Nov 5, 2009
  */
+@FunctionalInterface
 public interface DebuggerCommand {
     void execute(BufferedWriter out) throws IOException;
 }

@@ -7,9 +7,12 @@ import java.net.UnknownHostException;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 10, 2009
+ * Date: Nov 10, 2009
  */
-public class NetUtil {
+public final class NetUtil {
+
+    private NetUtil() {
+    }
 
     public static String getLocalHost() {
         String localHostString = "localhost";
@@ -18,8 +21,7 @@ public class NetUtil {
             if (localHost.getAddress().length != 4 && SystemInfo.isWindows) {
                 localHostString = "127.0.0.1";
             }
-        }
-        catch (UnknownHostException e) {
+        } catch (final UnknownHostException ignored) {
         }
         return localHostString;
     }

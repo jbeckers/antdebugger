@@ -1,5 +1,6 @@
 package com.handyedit.ant.xdebug;
 
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
@@ -12,11 +13,13 @@ import com.intellij.testFramework.LightVirtualFile;
  * @author Alexei Orischenko
  *         Date: Dec 16, 2009
  */
-public class AntExpressionCodeFragmentImpl extends PsiPlainTextFileImpl {
+final class AntExpressionCodeFragmentImpl extends PsiPlainTextFileImpl {
 
-    public AntExpressionCodeFragmentImpl(Project project, String name, String text) {
+    AntExpressionCodeFragmentImpl(final Project project,
+                                  final String name,
+                                  final String text) {
         super(((PsiManagerEx) PsiManager.getInstance(project)).getFileManager().createFileViewProvider(
-            new LightVirtualFile(name, StdFileTypes.PLAIN_TEXT, text), true));
+            new LightVirtualFile(name, FileTypes.PLAIN_TEXT, text), true));
 
         ((SingleRootFileViewProvider) getViewProvider()).forceCachedPsi(this);
     }

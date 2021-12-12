@@ -1,11 +1,13 @@
 package com.handyedit.ant.listener;
 
+import java.util.Arrays;
+
 public enum TempBreakpointType {
     INTO(0), OVER(1), OUT(2);
 
-    private int myValue;
+    private final int myValue;
 
-    private TempBreakpointType(int value) {
+    TempBreakpointType(final int value) {
         myValue = value;
     }
 
@@ -13,12 +15,7 @@ public enum TempBreakpointType {
         return myValue;
     }
 
-    public static TempBreakpointType get(int value) {
-        for (TempBreakpointType type: TempBreakpointType.values()) {
-            if (type.getValue() == value) {
-                return type;
-            }
-        }
-        return OVER;
+    public static TempBreakpointType get(final int value) {
+        return Arrays.stream(values()).filter(type -> type.getValue() == value).findFirst().orElse(OVER);
     }
 }

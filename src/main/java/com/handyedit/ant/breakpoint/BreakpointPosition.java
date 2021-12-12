@@ -21,15 +21,16 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
  */
 public class BreakpointPosition extends Pair<String, Integer> {
 
-    public BreakpointPosition(String file, Integer line) {
+    BreakpointPosition(final String file,
+                       final Integer line) {
         super(file, line);
     }
 
-    public BreakpointPosition(XLineBreakpoint<XBreakpointProperties> breakpoint) {
+    public BreakpointPosition(final XLineBreakpoint<XBreakpointProperties> breakpoint) {
         this(breakpoint.getPresentableFilePath(), breakpoint.getLine());
     }
 
-    public int getLine() {
+    int getLine() {
         return getSecond();
     }
 
@@ -37,7 +38,7 @@ public class BreakpointPosition extends Pair<String, Integer> {
         return getFirst();
     }
 
-    public BreakpointPosition toLineEnd(Project project) {
+    public BreakpointPosition toLineEnd(final Project project) {
         VirtualFile file = FileUtil.findFile(getFile());
         if (file != null) {
             PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -47,7 +48,9 @@ public class BreakpointPosition extends Pair<String, Integer> {
                 Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
                 if (doc != null && token != null) {
                     int endLine = doc.getLineNumber(token.getTextRange().getEndOffset());
-                    return getLine() != endLine ? new BreakpointPosition(getFile(), endLine) : this;
+                    return getLine() == endLine
+                            ? this
+                            : new BreakpointPosition(getFile(), endLine);
                 }
             }
         }

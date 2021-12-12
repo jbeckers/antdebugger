@@ -19,15 +19,15 @@ public class BreakpointManager {
     private BreakpointPosition myCurrentTaskLine;
     private BreakpointPosition myCurrentTargetLine;
 
-    private List<BreakpointPosition> myTaskStack = new ArrayList<BreakpointPosition>();
+    private final List<BreakpointPosition> myTaskStack = new ArrayList<>();
 
     // sync objects
-    private Object myResumeObject = new Object();
-    private Object myTempSyncObject = new Object();
+    private final Object myResumeObject = new Object();
+    private final Object myTempSyncObject = new Object();
 
     // task and target breakpoints
-    private Set<BreakpointPosition> myBreakpoints = new HashSet<BreakpointPosition>(); // breakpoints
-    private Set<BreakpointPosition> myRunToBreakpoints = new HashSet<BreakpointPosition>(); // run to cursor breakpoints
+    private final Set<BreakpointPosition> myBreakpoints = new HashSet<>(); // breakpoints
+    private final Set<BreakpointPosition> myRunToBreakpoints = new HashSet<>(); // run to cursor breakpoints
 
      // next task breakpoint variables
     private boolean myTaskBreakpoint = false; // true if set
@@ -39,11 +39,11 @@ public class BreakpointManager {
                 (myBreakpoints.contains(myCurrentTargetLine) && !isTask());
     }
 
-    public boolean isRunToBreakpoint(BreakpointPosition pos) {
+    boolean isRunToBreakpoint(final BreakpointPosition pos) {
         return myRunToBreakpoints.contains(pos);
     }
 
-    public boolean isTempBreakpoint() {
+    boolean isTempBreakpoint() {
         synchronized (myTempSyncObject) {
             if (isTask() && myTaskBreakpoint) {
                 if (myTempBreakpointType == TempBreakpointType.INTO) {
@@ -61,23 +61,23 @@ public class BreakpointManager {
         }
     }
 
-    public void add(BreakpointPosition loc) {
+    public void add(final BreakpointPosition loc) {
         myBreakpoints.add(loc);
     }
 
-    public void remove(BreakpointPosition loc) {
+    public void remove(final BreakpointPosition loc) {
         myBreakpoints.remove(loc);
     }
 
-    public void addRunTo(BreakpointPosition loc) {
+    public void addRunTo(final BreakpointPosition loc) {
         myRunToBreakpoints.add(loc);
     }
 
-    public void removeRunTo(BreakpointPosition pos) {
+    void removeRunTo(final BreakpointPosition pos) {
         myRunToBreakpoints.remove(pos);
     }
 
-    public void addTemp(TempBreakpointType type) {
+    public void addTemp(final TempBreakpointType type) {
         synchronized (myTempSyncObject) {
             myTaskBreakpoint = true;
             myTempBreakpointType = type;
@@ -85,13 +85,13 @@ public class BreakpointManager {
         }
     }
 
-    public void removeTemp() {
+    void removeTemp() {
         synchronized (myTempSyncObject) {
             myTaskBreakpoint = false;
         }
     }
 
-    public void waitResume() throws InterruptedException {
+    void waitResume() throws InterruptedException {
         synchronized (myResumeObject) {
             myResumeObject.wait();
         }
@@ -103,7 +103,8 @@ public class BreakpointManager {
         }
     }
 
-    public void setCurrentPosition(BreakpointPosition taskLine, BreakpointPosition targetLine) {
+    void setCurrentPosition(final BreakpointPosition taskLine,
+                            final BreakpointPosition targetLine) {
         myCurrentTaskLine = taskLine;
         myCurrentTargetLine = targetLine;
     }
@@ -112,7 +113,7 @@ public class BreakpointManager {
         return myCurrentTaskLine != null;
     }
 
-    public void setCurrentPosition(BreakpointPosition targetLine) {
+    void setCurrentPosition(final BreakpointPosition targetLine) {
         setCurrentPosition(null, targetLine);
     }
 
@@ -120,11 +121,11 @@ public class BreakpointManager {
         return myBreakpoints;
     }
 
-    public void onTargetStart(BreakpointPosition pos) {
+    void onTargetStart(final BreakpointPosition pos) {
         myTaskStack.add(pos);
     }
 
-    public void onTargetEnd() {
+    void onTargetEnd() {
         if (!myTaskStack.isEmpty()) {
             myTaskStack.remove(myTaskStack.size() - 1);
         }
@@ -135,10 +136,12 @@ public class BreakpointManager {
     }
 
     private BreakpointPosition getCurrentTarget() {
-        return !myTaskStack.isEmpty() ? myTaskStack.get(myTaskStack.size() - 1) : null;
+        return myTaskStack.isEmpty()
+                ? null
+                : myTaskStack.get(myTaskStack.size() - 1);
     }
 
-    public boolean isCurrentTarget(Location loc) {
+    boolean isCurrentTarget(final Location loc) {
         BreakpointPosition currentPos = getCurrentTarget();
         if (currentPos != null && loc != null) {
             BreakpointPosition pos = new BreakpointPosition(loc);
