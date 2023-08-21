@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.apache.ant:ant:1.10.13")
+    implementation("org.apache.ant:ant:1.10.14")
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
